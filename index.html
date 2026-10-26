@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Journalism Writer</title>
+  <meta name="description" content="Journalism Writer: a young journalist's learning companion for Filipino pupils learning campus journalism.">
+  <meta name="theme-color" content="#12306e">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="J-Writer">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#view">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="#/" aria-label="Journalism Writer, go to the front page">
+        <img class="brand__logo" src="assets/logo-128.webp" alt="" width="128" height="128">
+        <span class="brand__text">
+          <span class="brand__name">Journalism Writer</span>
+          <span class="brand__tag">A young journalist's learning companion</span>
+        </span>
+      </a>
+      <nav class="mainnav" id="mainnav" aria-label="Main"></nav>
+    </div>
+  </header>
+
+  <main id="view" class="view" tabindex="-1">
+    <div class="state state--loading" role="status">
+      <span class="spinner" aria-hidden="true"></span>
+      <p>Opening the newsroom…</p>
+    </div>
+  </main>
+
+  <noscript>
+    <p class="noscript">Journalism Writer needs JavaScript. Please turn it on in your browser settings.</p>
+  </noscript>
+
+  <footer class="site-footer">
+    <p id="dateline"></p>
+    <p>Lessons are prepared once a day (Philippine time) and saved in the Library. Always check facts with your teacher.</p>
+    <p>We only keep a nickname, a scrambled password and your age. No real names, emails or phone numbers.</p>
+    <p class="site-footer__links"><a href="#" id="install-link" data-icon="download">Install the app</a> <a href="#/admin" class="footer-admin" data-icon="shield">Teacher / Admin</a></p>
+  </footer>
+
+  <!-- "Now reading" bar: lets pupils pause or stop read-aloud from anywhere on the page. -->
+  <section id="now-reading" class="now-reading" hidden aria-label="Read aloud">
+    <span class="now-reading__icon" data-icon="volume" aria-hidden="true"></span>
+    <p class="now-reading__text"><strong id="now-reading-label">Reading</strong> <span id="now-reading-progress"></span></p>
+    <div class="now-reading__buttons" role="group" aria-label="Read aloud controls">
+      <button type="button" class="btn btn--small btn--light" id="nr-pause" data-icon="pause">Pause</button>
+      <button type="button" class="btn btn--small btn--light" id="nr-resume" data-icon="resume">Resume</button>
+      <button type="button" class="btn btn--small btn--light" id="nr-stop" data-icon="stop">Stop</button>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

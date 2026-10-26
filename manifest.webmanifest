@@ -1,0 +1,19 @@
+{
+  "name": "Journalism Writer: A Young Journalist's Learning Companion",
+  "short_name": "J-Writer",
+  "description": "Daily campus journalism lessons for Filipino pupils aged 10 to 18: writing rules, model articles, practice and read aloud.",
+  "id": "./",
+  "start_url": "./#/",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#12306e",
+  "lang": "en-PH",
+  "categories": ["education", "kids"],
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
