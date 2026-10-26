@@ -6,5 +6,5 @@
  * admin key live only in Apps Script → Project Settings → Script Properties.
  */
 window.JW_CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/PASTE_YOUR_DEPLOYMENT_ID/exec'
+  API_URL: 'https://script.google.com/macros/s/AKfycbxbE18TsvqD4ot3-vJHrczdHBQ-gGyvUwVQsKukCuo_XQXJKxuWoMBBO9zVz7waeOvQ/exec'
 };
