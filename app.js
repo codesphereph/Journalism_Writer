@@ -19,7 +19,8 @@
   var Api = window.JWApi;
   var CONFIG = {
     POLL_INTERVAL_MS: 6000,
-    MAX_POLLS: 30,
+    MAX_POLLS: 60,
+    MAX_WAIT_MS: 7 * 60 * 1000,   // stop waiting after 7 minutes (a stuck lesson is released by the server after 6)
     LIBRARY_PAGE_SIZE: 12,
     MIN_AGE: 9,
     MAX_AGE: 18,
@@ -27,6 +28,7 @@
     MAX_BOOKMARKS: 100
   };
   var LOGO_SRC = 'assets/logo.webp';
+  var GCASH_LOGO_SRC = 'assets/gcash-logo.png';
 
   // ---------------------------------------------------------------------------
   // DOM helpers (safe construction only)
@@ -577,7 +579,7 @@
       document.body.classList.add('has-modal');
       Modal.current = { root: root, dialog: dialog, prev: prev, onKey: onKey, onClose: opts.onClose, name: opts.name || '' };
       var focusFirst = function () {
-        var target = dialog.querySelector('[autofocus]') || dialog.querySelector('input, select, textarea') || closeBtn;
+        var target = dialog.querySelector('[data-autofocus]') || dialog.querySelector('input, select, textarea') || closeBtn;
         try { target.focus(); } catch (e) { /* ignore */ }
       };
       focusFirst();
@@ -594,8 +596,9 @@
       b.textContent = '';
       appendChildren(b, body);
       b.classList.remove('modal__body--swap'); void b.offsetWidth; b.classList.add('modal__body--swap');
-      var target = b.querySelector('[autofocus]') || b.querySelector('input, select, textarea, button');
-      if (target) { try { target.focus(); } catch (e) { /* ignore */ } }
+      var target = b.querySelector('[data-autofocus]') || b.querySelector('input, select, textarea, button');
+      if (target) { try { target.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
+      c.dialog.scrollTop = 0; // new step starts at the top (title and logo visible)
     },
     focusables: function (root) {
       return Array.prototype.slice.call(root.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'))
@@ -710,7 +713,7 @@
 
   function openSignIn(opts) {
     opts = opts || {};
-    var name = el('input', { type: 'text', id: 'si-name', autocomplete: 'username', maxlength: 20, required: true, autocapitalize: 'none', spellcheck: 'false', autofocus: true });
+    var name = el('input', { type: 'text', id: 'si-name', autocomplete: 'username', maxlength: 20, required: true, autocapitalize: 'none', spellcheck: 'false', 'data-autofocus': 'true' });
     var pw = passwordField('si-pass', 'Password', null, 'current-password');
     var remember = checkField('si-remember', 'Keep me signed in on this device (not on a shared computer)', false);
     var err = formError();
@@ -742,7 +745,7 @@
   }
 
   function openSignUp() {
-    var name = el('input', { type: 'text', id: 'su-name', autocomplete: 'username', maxlength: 20, required: true, autocapitalize: 'none', spellcheck: 'false', autofocus: true, pattern: '[A-Za-z][A-Za-z0-9_]{2,19}' });
+    var name = el('input', { type: 'text', id: 'su-name', autocomplete: 'username', maxlength: 20, required: true, autocapitalize: 'none', spellcheck: 'false', 'data-autofocus': 'true', pattern: '[A-Za-z][A-Za-z0-9_]{2,19}' });
     var pw = passwordField('su-pass', 'Make a password', '8 or more characters, with at least one letter and one number.', 'new-password');
     var age = el('select', { id: 'su-age', required: true }, [el('option', { value: '', text: 'Choose your age' })].concat(agesList().map(function (a) {
       return el('option', { value: String(a), selected: a === State.age, text: a + ' years old' });
@@ -787,7 +790,7 @@
   function openPayment(opts) {
     opts = opts || {};
     var onClose = function () { if (location.hash !== '#/account') location.hash = '#/account'; else route(); };
-    Modal.open({ name: 'gcash', title: 'Pay with GCash', cls: 'modal__dialog--gcash', onClose: onClose, badge: el('span', { class: 'modal__badge modal__badge--gcash' }, icon('wallet')), body: loadingState('Getting the payment details…') });
+    Modal.open({ name: 'gcash', title: 'Pay with GCash', cls: 'modal__dialog--gcash', onClose: onClose, badge: el('img', { class: 'modal__gcash-logo', src: GCASH_LOGO_SRC, alt: 'GCash', width: 191, height: 48 }), body: loadingState('Getting the payment details…') });
     Api.getPaymentInfo().then(function (info) {
       if (!Modal.isOpen('gcash')) return;
       Modal.replace('Pay with GCash', paymentBody(info, opts));
@@ -802,7 +805,7 @@
     var pay = acct.payment;
     var welcome = opts.welcome ? el('p', { class: 'notice notice--success' }, [icon('checkCircle'), el('span', null, [el('strong', { text: 'Account created! ' }), 'One last step: pay for your year of lessons.'])]) : null;
     if (!info.configured) {
-      return [welcome, el('p', { class: 'notice notice--warn', text: 'Payments are not set up yet. Please tell your teacher. You can sign in again later to pay.' }),
+      return [welcome, el('p', { class: 'notice notice--warn', text: 'Payments are not set up yet. Please tell the Admin. You can sign in again later to pay.' }),
         el('button', { type: 'button', class: 'btn btn--ghost btn--block', onclick: function () { Modal.close(); } }, 'Close')];
     }
     var ref = el('input', { type: 'text', id: 'gc-ref', inputmode: 'numeric', autocomplete: 'off', maxlength: 17, required: true, placeholder: '13 digits', spellcheck: 'false',
@@ -862,8 +865,7 @@
         ])
       ]),
       el('p', { class: 'privacy-note privacy-note--warn' }, [icon('shield'), el('span', null, [el('strong', { text: 'Stay safe: ' }), 'never share your GCash MPIN or the 6-digit code (OTP) with anyone. Journalism Writer will never ask for them. Ask a parent or guardian to help you pay.'])]),
-      el('p', { class: 'form-hint center', text: 'A teacher checks each payment in GCash, usually within one day. Your lessons open as soon as it is approved.' }),
-      el('button', { type: 'button', class: 'btn btn--ghost btn--block', onclick: function () { Modal.close(); } }, 'I will pay later')
+      el('p', { class: 'form-hint center', text: 'Admin checks each payment in GCash, usually within one day. Your lessons open as soon as it is approved.' })
     ];
   }
 
@@ -872,8 +874,8 @@
     return [
       el('div', { class: 'sent-illustration', 'aria-hidden': 'true' }, [icon('checkCircle')]),
       el('p', { class: 'lead-text center', text: 'We received your reference number' + (p && p.referenceNo ? ' ending in ' + p.referenceNo.slice(-4) : '') + '.' }),
-      el('p', { class: 'center', text: 'A teacher will check the payment in GCash, usually within one day. Sign in any time to see if your lessons are open.' }),
-      el('button', { type: 'button', class: 'btn btn--block', autofocus: true, onclick: function () { Modal.close(); } }, [icon('user'), 'See my account'])
+      el('p', { class: 'center', text: 'Admin will check the payment in GCash, usually within one day. Sign in any time to see if your lessons are open.' }),
+      el('button', { type: 'button', class: 'btn btn--block', 'data-autofocus': 'true', onclick: function () { Modal.close(); } }, [icon('user'), 'See my account'])
     ];
   }
 
@@ -1173,7 +1175,7 @@
     } else if (s.state === 'PENDING_REVIEW') {
       badge = ['wait', 'Checking payment'];
       title = 'We are checking your GCash payment';
-      body.push(el('p', { text: 'Reference number ending in ' + String(p && p.referenceNo || '').slice(-4) + ', sent ' + formatIsoDate(p && p.submittedAt) + '. A teacher usually checks payments within one day.' }));
+      body.push(el('p', { text: 'Reference number ending in ' + String(p && p.referenceNo || '').slice(-4) + ', sent ' + formatIsoDate(p && p.submittedAt) + '. Admin usually checks payments within one day.' }));
       actions.push(el('button', { type: 'button', class: 'btn', 'data-act': 'refresh', onclick: function () { route(); } }, [icon('replay'), 'Check again']));
       actions.push(el('button', { type: 'button', class: 'btn btn--ghost', 'data-act': 'pay', onclick: function () { openPayment(); } }, 'Fix the reference number'));
     } else if (s.state === 'REJECTED') {
@@ -1440,9 +1442,27 @@
       }
       if (age !== State.age) setAge(age);
       var bar = function () { return lessonToolbar(role.id, age); };
-      setView([bar(), loadingState('Getting today\'s ' + role.genre.toLowerCase() + ' lesson…', 'If nobody has opened it yet today, it can take up to a minute to prepare.')]);
+      var t0 = Date.now();
+      var waiting = function (title, sub) {
+        var state = loadingState(title, sub);
+        var clock = el('p', { class: 'state__sub state__clock', 'aria-hidden': 'true' });
+        state.appendChild(clock);
+        var tick = function () {
+          if (token !== renderToken || !clock.isConnected) return;
+          var s = Math.floor((Date.now() - t0) / 1000);
+          clock.textContent = 'Waiting ' + Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+          setTimeout(tick, 1000);
+        };
+        setTimeout(tick, 0);
+        return state;
+      };
+      setView([bar(), waiting('Getting today\'s ' + role.genre.toLowerCase() + ' lesson…', 'If nobody has opened it yet today, it can take up to a minute to prepare.')]);
 
       var attempt = 0;
+      var tooLong = function () {
+        setView([bar(), errorState('The lesson is taking longer than usual. Please try again in a few minutes.', function () { route(); },
+          el('p', { class: 'muted small', text: 'Teachers: open Teacher / Admin and press Check status to see the reason.' }))]);
+      };
       var poll = function () {
         attempt++;
         return Api.getTodayLesson(role.id, age).then(function (data) {
@@ -1453,22 +1473,20 @@
             focusHeading();
             return;
           }
-          if (data.status === 'GENERATING' && attempt <= CONFIG.MAX_POLLS) return waitAndPoll(data.retryAfterMs);
-          if (data.status === 'GENERATING') {
-            setView([bar(), errorState('The lesson is taking longer than usual. Please try again in a few minutes.', function () { route(); })]);
-            return;
-          }
+          if (data.status === 'GENERATING' && attempt <= CONFIG.MAX_POLLS && Date.now() - t0 < CONFIG.MAX_WAIT_MS) return waitAndPoll(data.retryAfterMs);
+          if (data.status === 'GENERATING') { tooLong(); return; }
           var libLink = el('p', null, el('a', { href: '#/library?role=' + encodeURIComponent(role.id) }, 'Practise with a saved ' + role.genre.toLowerCase() + ' lesson from the Library'));
           setView([bar(), errorState(data.message || 'Today\'s lesson is not ready yet.', data.canRetry ? function () { route(); } : null, libLink)]);
         }, function (err) {
           if (token !== renderToken) return;
           // The server keeps working after a slow first-time generation; check again instead of failing.
-          if (err.code === 'TIMEOUT' && attempt <= CONFIG.MAX_POLLS) return waitAndPoll(3000);
+          if (err.code === 'TIMEOUT' && attempt <= CONFIG.MAX_POLLS && Date.now() - t0 < CONFIG.MAX_WAIT_MS) return waitAndPoll(3000);
+          if (err.code === 'TIMEOUT') { tooLong(); return; }
           setView([bar(), errorState(friendlyError(err), function () { route(); })]);
         });
       };
       var waitAndPoll = function (ms) {
-        setView([bar(), loadingState('The editor is preparing today\'s ' + role.genre.toLowerCase() + ' lesson…', 'This page will update by itself. Please wait.')]);
+        setView([bar(), waiting('The editor is preparing today\'s ' + role.genre.toLowerCase() + ' lesson…', 'This page will update by itself. Please wait.')]);
         return sleep(Math.max(3000, Math.min(ms || CONFIG.POLL_INTERVAL_MS, 15000))).then(function () {
           if (token === renderToken) return poll();
         });
@@ -1944,7 +1962,7 @@
         busy(true, 'Checking…');
         Api.adminStatus(State.adminKey, opts()).then(function (d) {
           out.textContent = '';
-          out.appendChild(el('p', { class: 'muted', text: 'Status for ' + formatLongDate(d.date) + ' · Model: ' + d.config.model + ' · OpenAI key set: ' + (d.config.openaiKeySet ? 'yes' : 'NO') + ' · Daily triggers installed: ' + (d.config.triggersInstalled ? 'yes' : 'NO (run setup())') }));
+          out.appendChild(el('p', { class: 'muted', text: 'Status for ' + formatLongDate(d.date) + ' · Model: ' + d.config.model + (d.config.reasoningEffort ? ' (reasoning: ' + d.config.reasoningEffort + ')' : '') + (d.config.parallel ? ' · ' + d.config.parallel + ' lessons at a time' : '') + ' · OpenAI key set: ' + (d.config.openaiKeySet ? 'yes' : 'NO') + ' · Daily triggers installed: ' + (d.config.triggersInstalled ? 'yes' : 'NO (run setup())') }));
           out.appendChild(table(d.rows));
         }, function (err) { out.textContent = ''; out.appendChild(errorState(friendlyError(err))); }).then(function () { busy(false); });
       });

@@ -582,3 +582,6 @@ body.has-modal { overflow: hidden; }
 html, body { overflow-x: clip; }
 .landing-hero, .landing-section--tint { margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding-left: max(16px, calc(50vw - 520px)); padding-right: max(16px, calc(50vw - 520px)); }
 .landing-hero { margin-top: -20px; }
+
+/* GCash logo in the payment window */
+.modal__gcash-logo { display: block; height: 44px; width: auto; margin: 2px 0 10px; animation: jw-pop .45s ease .1s both; }

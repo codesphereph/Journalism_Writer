@@ -5,7 +5,7 @@
  * the network, so a pupil always sees the saved lesson from Google Sheets and their real account.
  * Bump VERSION whenever you upload changed frontend files, so devices pick up the new version.
  */
-var VERSION = 'jw-shell-v3.1.1';
+var VERSION = 'jw-shell-v3.2.2';
 var SHELL = [
   './',
   './index.html',
@@ -18,7 +18,8 @@ var SHELL = [
   './assets/logo-128.webp',
   './assets/favicon.png',
   './assets/icon-192.png',
-  './assets/icon-512.png'
+  './assets/icon-512.png',
+  './assets/gcash-logo.png'
 ];
 
 self.addEventListener('install', function (event) {
